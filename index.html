@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Card Football Real-Time Manager</title>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="app-container">
+    
+    <!-- HEADER BAR -->
+    <header>
+      <div class="logo">
+        <i class="fa-solid fa-circle-nodes"></i>
+        <span>CARD FOOTBALL</span>
+      </div>
+      
+      <div id="user-header-profile" style="display: none; align-items: center; gap: 15px;">
+        <button id="admin-shortcut-btn" class="btn btn-small" style="display: none; border-color: var(--accent-purple);">
+          <i class="fa-solid fa-user-shield" style="color: var(--accent-purple);"></i> Admin
+        </button>
+        <div class="user-profile-badge">
+          <span id="header-username" class="font-display">Guest</span>
+          <div class="coins-badge">
+            <i class="fa-solid fa-coins"></i>
+            <span id="header-coins">0</span>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn btn-icon" title="Logout">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 1. AUTH SCREEN -->
+    <div id="screen-auth" class="screen active">
+      <div class="auth-wrapper glass-panel">
+        <div id="firebase-status-badge" class="firebase-status-banner offline">
+          Checking connection...
+        </div>
+        
+        <div class="auth-tabs">
+          <div class="auth-tab-btn active" onclick="switchAuthTab('login')">เข้าสู่ระบบ</div>
+          <div class="auth-tab-btn" onclick="switchAuthTab('signup')">สมัครสมาชิก</div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="auth-form active" onsubmit="return false;">
+          <div class="input-group">
+            <label for="login-email">ที่อยู่อีเมลสโมสร</label>
+            <input type="email" id="login-email" class="input-field" placeholder="email@game.com" required>
+          </div>
+          <div class="input-group">
+            <label for="login-password">รหัสผ่าน</label>
+            <input type="password" id="login-password" class="input-field" placeholder="••••••••" required>
+          </div>
+          <button type="submit" id="submit-login-btn" class="btn btn-primary" style="margin-top: 10px; justify-content: center;">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> เข้าสู่สนามแข่ง
+          </button>
+        </form>
+
+        <!-- Signup Form -->
+        <form id="signup-form" class="auth-form" onsubmit="return false;">
+          <div class="input-group">
+            <label for="signup-username">ชื่อผู้จัดการทีม</label>
+            <input type="text" id="signup-username" class="input-field" placeholder="ตัวอย่าง: เกียรติศักดิ์" required>
+          </div>
+          <div class="input-group">
+            <label for="signup-email">ที่อยู่อีเมลสโมสร</label>
+            <input type="email" id="signup-email" class="input-field" placeholder="email@game.com" required>
+          </div>
+          <div class="input-group">
+            <label for="signup-password">รหัสผ่าน</label>
+            <input type="password" id="signup-password" class="input-field" placeholder="••••••••" required>
+          </div>
+          <button type="submit" id="submit-signup-btn" class="btn btn-primary" style="margin-top: 10px; justify-content: center;">
+            <i class="fa-solid fa-user-plus"></i> สมัครสมาชิกและสร้างสโมสร
+          </button>
+        </form>
+
+
+      </div>
+    </div>
+
+    <!-- 2. MAIN HUB (DASHBOARD) -->
+    <div id="screen-dashboard" class="screen">
+      <div class="glass-panel" style="margin-bottom: 24px;">
+        <h2 class="font-display">ยินดีต้อนรับผู้จัดการทีม, <span id="dashboard-coach-name" style="color: var(--accent-neon-green);">Guest</span></h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">
+          จัดการแผนสโมสร สุ่มตู้การ์ดนักเตะระดับโลก และประชันฝีเท้าแบบเรียลไทม์กับเพื่อนของคุณ!
+        </p>
+      </div>
+
+      <div class="menu-grid">
+        <div id="menu-play-mode" class="menu-card glass-panel" style="border-color: var(--accent-neon-green); cursor: pointer; transition: all 0.3s ease;">
+          <i class="fa-solid fa-trophy" style="font-size: 2.2rem; color: var(--accent-neon-green); margin-bottom: 12px;"></i>
+          <h3 class="font-display">สนามแข่งขัน (VS ARENA)</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">แข่งกับบอทสโมสรดังระดับโลก หรือท้าดวล 1v1 กับเพื่อนของคุณแบบเรียลไทม์</p>
+        </div>
+        
+        <div id="menu-squad-builder" class="menu-card glass-panel" style="border-color: var(--accent-blue); cursor: pointer; transition: all 0.3s ease;">
+          <i class="fa-solid fa-people-group" style="font-size: 2.2rem; color: var(--accent-blue); margin-bottom: 12px;"></i>
+          <h3 class="font-display">จัดแผนทีม (SQUAD BUILDER)</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">จัดทัพ 11 ตัวจริง ปรับหมากสำรอง เปลี่ยนแผนยุทธวิธีและจัดทีมอัตโนมัติ</p>
+        </div>
+
+        <div id="menu-shop" class="menu-card glass-panel" style="border-color: var(--accent-gold); cursor: pointer; transition: all 0.3s ease;">
+          <i class="fa-solid fa-store" style="font-size: 2.2rem; color: var(--accent-gold); margin-bottom: 12px;"></i>
+          <h3 class="font-display">ตู้สุ่มกาชา (GACHA SHOP)</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">สุ่มแพ็คการ์ดสโมสร ลุ้นรับยอดนักเตะทีมชาติไทยและระดับตํานานโลก</p>
+        </div>
+
+        <div id="menu-inventory" class="menu-card glass-panel" style="border-color: var(--accent-purple); cursor: pointer; transition: all 0.3s ease;">
+          <i class="fa-solid fa-box-open" style="font-size: 2.2rem; color: var(--accent-purple); margin-bottom: 12px;"></i>
+          <h3 class="font-display">คลังนักเตะ (ROSTER)</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">ค้นหารายชื่อการ์ดนักเตะ ตรวจสอบความแข็งแกร่ง และจังหวะติดโทษแบน</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. PLAY MODE LOBBY PANEL -->
+    <div id="screen-play" class="screen">
+      <div style="margin-bottom: 20px;">
+        <button class="btn btn-small back-to-dash-btn"><i class="fa-solid fa-chevron-left"></i> กลับหน้าหลัก</button>
+      </div>
+      
+      <div class="squad-builder-layout">
+        <!-- Play Options -->
+        <div class="glass-panel" style="display: flex; flex-direction: column; gap: 20px;">
+          <h2 class="font-display">เลือกโหมดการแข่งขัน</h2>
+          
+          <!-- Bot Option -->
+          <div class="glass-panel" style="background: rgba(255,255,255,0.02); display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <h3>ดวลกับทีมบอทสโมสรดัง (VS Bots)</h3>
+              <p style="color: var(--text-muted); font-size: 0.85rem;">ประชันฝีเท้ากับยอดทีมระดับโลก สะสมเหรียญตามความยาก!</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+              <button class="btn btn-small bot-match-btn" data-team="leicester"><i class="fa-solid fa-shield-dog"></i> เลสเตอร์ (150💰)</button>
+              <button class="btn btn-small btn-primary bot-match-btn" data-team="chelsea"><i class="fa-solid fa-shield"></i> เชลซี (300💰)</button>
+              <button class="btn btn-small btn-gold bot-match-btn" data-team="mancity"><i class="fa-solid fa-crown"></i> แมนฯ ซิตี้ (600💰)</button>
+              <button class="btn btn-small btn-danger bot-match-btn" data-team="realmadrid"><i class="fa-solid fa-gem"></i> เรอัล มาดริด (1200💰)</button>
+            </div>
+          </div>
+
+          <!-- Quick Match Matchmaking (Online Only) -->
+          <div id="online-matchmaking-box" class="glass-panel" style="background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3>ค้นหาห้องแข่งแบบรวดเร็ว</h3>
+              <p style="color: var(--text-muted); font-size: 0.85rem;">สุ่มคู่แข่งออนไลน์ทันที เพื่อดวลฝีเท้าแบบ 1v1</p>
+            </div>
+            <button id="start-matchmaking-btn" class="btn btn-primary">
+              <i class="fa-solid fa-gamepad"></i> ค้นหาคู่แข่ง
+            </button>
+          </div>
+
+          <!-- Room custom 1v1 -->
+          <div id="online-custom-box" class="glass-panel" style="background: rgba(255,255,255,0.02); display: flex; flex-direction: column; gap: 15px;">
+            <div>
+              <h3>ดวล 1v1 กับเพื่อน (เลขห้องส่วนตัว)</h3>
+              <p style="color: var(--text-muted); font-size: 0.85rem;">สร้างรหัสห้องใหม่ หรือกรอกเลขห้องเพื่อเข้าไปแข่งกัน</p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <button id="create-room-btn" class="btn" style="flex: 1; justify-content: center;">
+                <i class="fa-solid fa-circle-plus"></i> สร้างห้องส่วนตัว
+              </button>
+              <div style="display: flex; flex: 1; gap: 6px;">
+                <input type="text" id="join-room-code-input" class="input-field" style="width: 100px; text-transform: uppercase;" placeholder="เลขห้อง">
+                <button id="join-room-btn" class="btn btn-primary" style="flex: 1; justify-content: center;">เข้าแข่ง</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Match Status / Matchmaking Lobby Overlay -->
+        <div id="lobby-wait-panel" class="glass-panel" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px;">
+          <div id="lobby-status-content" style="text-align: center;">
+            <i class="fa-solid fa-people-arrows" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 12px;"></i>
+            <h3>ไม่มีการเชื่อมต่อห้องแข่งขัน</h3>
+            <p style="color: var(--text-muted); max-width: 250px; font-size: 0.85rem; margin-top: 5px;">
+              Select a match mode on the left. If online, matchmaking status will show here.
+            </p>
+          </div>
+          <div id="lobby-active-content" style="display: none; text-align: center; width: 100%;">
+            <div id="lobby-spinner" style="font-size: 2.5rem; color: var(--accent-neon-green); animation: spinRays 2s linear infinite; margin-bottom: 12px;">
+              <i class="fa-solid fa-spinner"></i>
+            </div>
+            <h3 id="lobby-title-txt">Matchmaking...</h3>
+            <p id="lobby-desc-txt" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Searching for coach...</p>
+            <div id="room-code-display-box" style="display: none; margin-bottom: 20px;">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Share this room code with a friend:</span>
+              <div style="font-size: 2rem; font-weight: 800; letter-spacing: 0.1em; color: var(--accent-gold); margin-top: 5px;" id="room-code-large">----</div>
+            </div>
+            <button id="cancel-lobby-btn" class="btn btn-danger btn-small">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. SQUAD BUILDER SCREEN -->
+    <div id="screen-squad" class="screen">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <button class="btn btn-small back-to-dash-btn"><i class="fa-solid fa-chevron-left"></i> กลับหน้าหลัก</button>
+        <div style="display: flex; gap: 12px;">
+          <select id="formation-select" class="input-field" style="padding: 6px 12px; font-weight: 700;">
+            <option value="4-3-3">Tactics: 4-3-3</option>
+            <option value="4-4-2">Tactics: 4-4-2</option>
+            <option value="3-5-2">Tactics: 3-5-2</option>
+          </select>
+          <button id="squad-auto-btn" class="btn btn-primary btn-small"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto Match</button>
+        </div>
+      </div>
+
+      <div class="squad-builder-layout">
+        <!-- Interactive Football Pitch Layout -->
+        <div class="pitch-container" id="tactical-pitch">
+          <!-- Slots rendered dynamically via app.js -->
+        </div>
+
+        <!-- Squad Bench & Selection Side Panel -->
+        <div class="squad-bench-panel">
+          <div class="glass-panel">
+            <h3 class="font-display">พลังทีม OVR รวม</h3>
+            <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 5px;">
+              <span id="squad-team-ovr" style="font-size: 3.5rem; font-weight: 900; color: var(--accent-neon-green);">0</span>
+              <span style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600;">OVR</span>
+            </div>
+          </div>
+
+          <div class="glass-panel" style="flex: 1; display: flex; flex-direction: column;">
+            <h3 class="font-display">ผู้เล่นสำรอง (Bench)</h3>
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 12px;">การ์ดนักเตะสำรองสามารถใช้เปลี่ยนตัวได้ช่วงพักครึ่งเวลา (30 วินาที)</p>
+            <div id="bench-slots-list" class="bench-slots-container">
+              <!-- Bench cards rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. SHOP GACHA PACKS -->
+    <div id="screen-shop" class="screen">
+      <div style="margin-bottom: 20px;">
+        <button class="btn btn-small back-to-dash-btn"><i class="fa-solid fa-chevron-left"></i> กลับหน้าหลัก</button>
+      </div>
+
+      <div class="glass-panel" style="text-align: center; margin-bottom: 30px;">
+        <h2 class="font-display">ตู้สุ่มกาชาซองการ์ดนักเตะ</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 4px;">ใช้เหรียญสะสมคลับฟุตบอลเพื่อสุ่มเปิดซองการ์ด ยิ่งตู้อัตราสูงโอกาสได้การ์ดตำนานยิ่งมาก!</p>
+      </div>
+
+      <div id="shop-pack-list" class="shop-pack-container">
+        <!-- Dynamic Gacha Packs Rendered Here -->
+      </div>
+    </div>
+
+    <!-- 6. INVENTORY LIST -->
+    <div id="screen-inventory" class="screen">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <button class="btn btn-small back-to-dash-btn"><i class="fa-solid fa-chevron-left"></i> กลับหน้าหลัก</button>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="inventory-search" class="input-field" style="padding: 6px 12px;" placeholder="ค้นหาชื่อนักเตะ...">
+          <select id="inventory-filter-pos" class="input-field" style="padding: 6px 12px;">
+            <option value="ALL">ทุกตำแหน่ง</option>
+            <option value="GK">ผู้รักษาประตู (GK)</option>
+            <option value="DF">กองหลัง (DF)</option>
+            <option value="MF">กองกลาง (MF)</option>
+            <option value="FW">กองหน้า (FW)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="glass-panel">
+        <h2 class="font-display">คลังการ์ดนักเตะสโมสร (<span id="inventory-count">0</span> ใบ)</h2>
+        <div id="inventory-cards-list" class="inventory-grid">
+          <!-- Owned cards rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. MATCH ARENA SCREEN -->
+    <div id="screen-match-arena" class="screen">
+      <!-- Arena Header Board -->
+      <div class="scoreboard-container">
+        <div id="scoreboard-p1-block" class="team-score-block">
+          <div id="arena-p1-name" class="team-score-name">ผู้เล่น 1</div>
+          <div id="arena-p1-score" class="team-score-val">0</div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+          <div id="arena-match-clock" class="match-clock">00'</div>
+          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);" id="arena-match-status-lbl">ถ่ายทอดสด</span>
+        </div>
+
+        <div id="scoreboard-p2-block" class="team-score-block">
+          <div id="arena-p2-name" class="team-score-name">ผู้เล่น 2</div>
+          <div id="arena-p2-score" class="team-score-val">0</div>
+        </div>
+      </div>
+
+      <div class="arena-grid">
+        <!-- Field graphic tracker & Match animation -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <div class="arena-field-widget">
+            <span class="arena-field-zone-name zone-gk1">เขตโทษ P1</span>
+            <span class="arena-field-zone-name zone-df1">แดนหลัง P1</span>
+            <span class="arena-field-zone-name zone-mf">แดนกลาง</span>
+            <span class="arena-field-zone-name zone-df2">แดนหลัง P2</span>
+            <span class="arena-field-zone-name zone-gk2">เขตโทษ P2</span>
+            
+            <!-- Home Team Player Dots (White) -->
+            <div class="field-player-dot team-home" data-base-left="8" data-base-top="50" style="left: 8%; top: 50%;"></div>
+            <div class="field-player-dot team-home" data-base-left="22" data-base-top="25" style="left: 22%; top: 25%;"></div>
+            <div class="field-player-dot team-home" data-base-left="22" data-base-top="75" style="left: 22%; top: 75%;"></div>
+            <div class="field-player-dot team-home" data-base-left="38" data-base-top="35" style="left: 38%; top: 35%;"></div>
+            <div class="field-player-dot team-home" data-base-left="38" data-base-top="65" style="left: 38%; top: 65%;"></div>
+            <div class="field-player-dot team-home" data-base-left="45" data-base-top="50" style="left: 45%; top: 50%;"></div>
+            
+            <!-- Away Team Player Dots (Red) -->
+            <div class="field-player-dot team-away" data-base-left="92" data-base-top="50" style="left: 92%; top: 50%;"></div>
+            <div class="field-player-dot team-away" data-base-left="78" data-base-top="25" style="left: 78%; top: 25%;"></div>
+            <div class="field-player-dot team-away" data-base-left="78" data-base-top="75" style="left: 78%; top: 75%;"></div>
+            <div class="field-player-dot team-away" data-base-left="62" data-base-top="35" style="left: 62%; top: 35%;"></div>
+            <div class="field-player-dot team-away" data-base-left="62" data-base-top="65" style="left: 62%; top: 65%;"></div>
+            <div class="field-player-dot team-away" data-base-left="55" data-base-top="50" style="left: 55%; top: 50%;"></div>
+
+            <div id="arena-ball" class="football-ball"></div>
+          </div>
+
+          <!-- Dynamic Clash Card view zone -->
+          <div class="glass-panel" style="flex: 1; min-height: 250px; display: flex; align-items: center; justify-content: center; gap: 40px; position: relative;">
+            <div id="arena-clash-left-side" style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+              <!-- Played P1 card -->
+            </div>
+            <div id="arena-vs-text" style="font-size: 2.2rem; font-weight: 900; font-family: var(--font-display); opacity: 0.2;">VS</div>
+            <div id="arena-clash-right-side" style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+              <!-- Played P2 card -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Scrolling Match Commentary Box -->
+        <div id="arena-commentary-log" class="commentary-log-box">
+          <!-- Logs populate here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. ADMIN DASHBOARD SCREEN -->
+    <div id="screen-admin" class="screen">
+      <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn btn-small back-to-dash-btn"><i class="fa-solid fa-chevron-left"></i> กลับหน้าหลัก</button>
+        <h2 class="font-display" style="color: var(--accent-purple);"><i class="fa-solid fa-user-shield"></i> Administration Console</h2>
+      </div>
+
+      <div class="admin-layout">
+        <!-- Sidebar Navigation -->
+        <div class="admin-sidebar glass-panel">
+          <div class="admin-tab-btn active" onclick="switchAdminTab('users')"><i class="fa-solid fa-users"></i> Users Database</div>
+          <div class="admin-tab-btn" onclick="switchAdminTab('catalog')"><i class="fa-solid fa-address-card"></i> Card Templates</div>
+          <div class="admin-tab-btn" onclick="switchAdminTab('packs')"><i class="fa-solid fa-store"></i> Gacha Packs</div>
+          <div class="admin-tab-btn" onclick="switchAdminTab('matches')"><i class="fa-solid fa-network-wired"></i> Active Matches</div>
+        </div>
+
+        <!-- Tab Content sections -->
+        <div class="admin-tab-contents glass-panel" style="flex: 1;">
+          
+          <!-- Users Section -->
+          <div id="admin-sect-users" class="admin-content-section active">
+            <h3 style="margin-bottom: 12px;">Registered Users List</h3>
+            <div style="overflow-x: auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Coins</th>
+                    <th>W - D - L</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-table-body">
+                  <!-- Users loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Catalog Section -->
+          <div id="admin-sect-catalog" class="admin-content-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3>Global Card Catalog</h3>
+              <button onclick="openAddCardModal()" class="btn btn-primary btn-small"><i class="fa-solid fa-plus"></i> New Template</button>
+            </div>
+            <div style="overflow-x: auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Pos</th>
+                    <th>OVR</th>
+                    <th>Rarity</th>
+                    <th>Skill</th>
+                    <th>Stats (PAC/SHO/PAS/DRI/DEF/PHY)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-catalog-table-body">
+                  <!-- Templates loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Matches Section -->
+          <div id="admin-sect-matches" class="admin-content-section">
+            <h3 style="margin-bottom: 12px;">Active Match Sessions</h3>
+            <div style="overflow-x: auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Room</th>
+                    <th>Type</th>
+                    <th>P1 Coach (OVR)</th>
+                    <th>P2 Coach (OVR)</th>
+                    <th>Minute</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-matches-table-body">
+                  <!-- Active matches loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Gacha Packs Section -->
+          <div id="admin-sect-packs" class="admin-content-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3>Gacha Packs Database</h3>
+              <button onclick="openAddPackModal()" class="btn btn-primary btn-small"><i class="fa-solid fa-plus"></i> New Pack</button>
+            </div>
+            <div style="overflow-x: auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Cost</th>
+                    <th>Icon</th>
+                    <th>Description</th>
+                    <th>Rates (L / E / R / C)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-packs-table-body">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- --- MODALS & OVERLAYS --- -->
+
+
+
+  <!-- 2. Gacha Reveal Pack Animation Overlay -->
+  <div id="gacha-reveal-overlay" class="pack-reveal-overlay">
+    <div class="glowing-rays"></div>
+    <div style="margin-bottom: 40px; text-align: center; z-index: 10;">
+      <h2 class="font-display" style="font-size: 2.2rem; color: var(--accent-gold); text-shadow: 0 0 20px rgba(250, 190, 0, 0.4);">PACK REVEAL!</h2>
+      <p style="color: var(--text-muted); margin-top: 5px;">Tap the card to reveal your new player card!</p>
+    </div>
+    
+    <!-- Render Gacha card -->
+    <div id="gacha-reveal-card-spot" style="z-index: 10;">
+      <!-- Single Card Component goes here -->
+    </div>
+    
+    <div id="gacha-reveal-actions" style="margin-top: 40px; display: none; z-index: 10;">
+      <button id="gacha-reveal-close-btn" class="btn btn-primary">Add to Club Inventory</button>
+    </div>
+  </div>
+
+  <!-- 3. Halftime Substitution Overlay -->
+  <div id="halftime-overlay" class="halftime-modal">
+    <div class="halftime-content">
+      <div style="text-align: center;">
+        <h2 class="font-display" style="color: var(--accent-neon-green);">ปรับหมากและวางแผนช่วงพักครึ่งเวลา</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 3px;">คลิกเลือกตัวจริงในสนามทางซ้าย และคลิกเลือกตัวสำรองทางขวาเพื่อทำการเปลี่ยนตัวสลับลงตำแหน่งเดียวกัน</p>
+      </div>
+      
+      <div class="halftime-timer-bar">
+        <div id="halftime-progress-fill" class="halftime-timer-fill"></div>
+      </div>
+      <div id="halftime-timer-label" class="halftime-timer-lbl">เวลาคงเหลือ: 30 วินาที</div>
+
+      <div class="sub-swap-arena">
+        <!-- Starting slots list -->
+        <div class="glass-panel" style="background: rgba(0,0,0,0.25);">
+          <h4 style="margin-bottom: 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">ผู้เล่นตัวจริงในสนาม</h4>
+          <div id="halftime-pitch-slots" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-height: 250px; overflow-y: auto;">
+            <!-- Active slots to click select -->
+          </div>
+        </div>
+        <!-- Bench substitutes -->
+        <div class="glass-panel" style="background: rgba(0,0,0,0.25);">
+          <h4 style="margin-bottom: 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 5px;">ผู้เล่นสำรองบนม้านั่ง</h4>
+          <div id="halftime-bench-slots" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+            <!-- Bench slots -->
+          </div>
+        </div>
+      </div>
+      
+      <div style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 600;" id="halftime-sub-status-msg">
+        โปรดคลิกเลือกการ์ดตัวจริงด้านซ้าย แล้วเลือกการ์ดสำรองตำแหน่งเดียวกันด้านขวาเพื่อแลกเปลี่ยน
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Admin Edit User Coins/Bans Modal -->
+  <div id="modal-admin-user" class="modal-wrapper">
+    <div class="modal-card">
+      <div class="modal-card-header">
+        <h3 id="admin-user-modal-title" class="font-display">Edit Club profile</h3>
+        <button onclick="closeModal('modal-admin-user')" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input type="hidden" id="admin-user-modal-uid">
+      <div class="input-group">
+        <label for="admin-user-coins">Club Coin Balance</label>
+        <input type="number" id="admin-user-coins" class="input-field" required>
+      </div>
+      <div class="input-group">
+        <label for="admin-user-new-password">Reset User Password (Optional)</label>
+        <input type="password" id="admin-user-new-password" class="input-field" placeholder="Enter new password">
+      </div>
+      <div class="input-group">
+        <label for="admin-user-add-card">Grant Player Card (Adds directly to inventory)</label>
+        <select id="admin-user-add-card" class="input-field">
+          <!-- Loaded dynamically -->
+        </select>
+      </div>
+      <div class="modal-card-actions">
+        <button id="admin-user-delete-btn" class="btn btn-danger btn-small">Delete Account</button>
+        <button id="admin-user-save-btn" class="btn btn-primary btn-small">Save Updates</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Admin Create/Edit Card Template Modal -->
+  <div id="modal-admin-card" class="modal-wrapper">
+    <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-card-header">
+        <h3 id="admin-card-modal-title" class="font-display">Configure Player Card Template</h3>
+        <button onclick="closeModal('modal-admin-card')" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input type="hidden" id="admin-card-modal-id">
+      
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+        <div class="input-group">
+          <label for="admin-card-name">Player Name</label>
+          <input type="text" id="admin-card-name" class="input-field" placeholder="e.g. Lionel Messi" required>
+        </div>
+        <div class="input-group">
+          <label for="admin-card-pos">Field Position</label>
+          <select id="admin-card-pos" class="input-field">
+            <option value="GK">Goalkeeper (GK)</option>
+            <option value="DF">Defender (DF)</option>
+            <option value="MF">Midfielder (MF)</option>
+            <option value="FW">Forward (FW)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="input-group">
+          <label for="admin-card-ovr">Overall Rating (OVR)</label>
+          <input type="number" id="admin-card-ovr" class="input-field" min="1" max="99" required>
+        </div>
+        <div class="input-group">
+          <label for="admin-card-rarity">Card Rarity Frame</label>
+          <select id="admin-card-rarity" class="input-field">
+            <option value="common">Common</option>
+            <option value="rare">Rare</option>
+            <option value="epic">Epic</option>
+            <option value="legendary">Legendary</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 8px; margin: 10px 0;">
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-card-pac">Pace (PAC)</label>
+          <input type="number" id="admin-card-pac" class="input-field" min="1" max="99" required>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-card-sho">Shooting (SHO)</label>
+          <input type="number" id="admin-card-sho" class="input-field" min="1" max="99" required>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-card-pas">Passing (PAS)</label>
+          <input type="number" id="admin-card-pas" class="input-field" min="1" max="99" required>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-card-dri">Dribbling (DRI)</label>
+          <input type="number" id="admin-card-dri" class="input-field" min="1" max="99" required>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-card-def">Defending (DEF)</label>
+          <input type="number" id="admin-card-def" class="input-field" min="1" max="99" required>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-card-phy">Physical (PHY)</label>
+          <input type="number" id="admin-card-phy" class="input-field" min="1" max="99" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px;">
+        <div class="input-group">
+          <label for="admin-card-skill">Skill Tag</label>
+          <input type="text" id="admin-card-skill" class="input-field" placeholder="Golden Glove">
+        </div>
+        <div class="input-group">
+          <label for="admin-card-skilldesc">Skill Description</label>
+          <input type="text" id="admin-card-skilldesc" class="input-field" placeholder="Boosts goalkeeper stats +15 on shots.">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="admin-card-imageurl">Card Image Background URL</label>
+        <input type="text" id="admin-card-imageurl" class="input-field" placeholder="e.g. https://domain.com/photo.png">
+      </div>
+
+      <div class="modal-card-actions">
+        <button id="admin-card-delete-btn" class="btn btn-danger btn-small" style="display:none;">Delete Template</button>
+        <button id="admin-card-save-btn" class="btn btn-primary btn-small">Commit Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Configure Gacha Pack Modal -->
+  <div id="modal-admin-pack" class="modal-wrapper">
+    <div class="modal-card">
+      <div class="modal-card-header">
+        <h3 id="admin-pack-modal-title" class="font-display">Configure Gacha Pack</h3>
+        <button onclick="closeModal('modal-admin-pack')" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input type="hidden" id="admin-pack-modal-id">
+      <div class="input-group">
+        <label for="admin-pack-name">Pack Name</label>
+        <input type="text" id="admin-pack-name" class="input-field" placeholder="e.g. Legendary Pack" required>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px;">
+        <div class="input-group">
+          <label for="admin-pack-cost">Cost (Coins)</label>
+          <input type="number" id="admin-pack-cost" class="input-field" value="500" required>
+        </div>
+        <div class="input-group">
+          <label for="admin-pack-icon">Pack Icon Class (FontAwesome)</label>
+          <input type="text" id="admin-pack-icon" class="input-field" value="fa-gift" placeholder="fa-gift">
+        </div>
+      </div>
+      <div class="input-group">
+        <label for="admin-pack-desc">Description</label>
+        <input type="text" id="admin-pack-desc" class="input-field" placeholder="Premium odds for legends.">
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 8px; margin: 10px 0;">
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-pack-rate-l">Legend %</label>
+          <input type="number" id="admin-pack-rate-l" class="input-field" min="0" max="100" value="5" required>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-pack-rate-e">Epic %</label>
+          <input type="number" id="admin-pack-rate-e" class="input-field" min="0" max="100" value="15" required>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-pack-rate-r">Rare %</label>
+          <input type="number" id="admin-pack-rate-r" class="input-field" min="0" max="100" value="30" required>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label for="admin-pack-rate-c">Common %</label>
+          <input type="number" id="admin-pack-rate-c" class="input-field" min="0" max="100" value="50" required>
+        </div>
+      </div>
+      <div class="modal-card-actions">
+        <button id="admin-pack-delete-btn" class="btn btn-danger btn-small" style="display:none;">Delete Pack</button>
+        <button id="admin-pack-save-btn" class="btn btn-primary btn-small">Commit Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Squad Card Selection Modal -->
+  <div id="modal-squad-select" class="modal-wrapper">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-card-header">
+        <h3 class="font-display">เลือกนักเตะลงตำแหน่ง <span id="squad-select-position-lbl">FW</span></h3>
+        <button onclick="closeModal('modal-squad-select')" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 12px;">เลือกผู้เล่นจากคลังการ์ดสโมสรของคุณเพื่อลงสนามในตำแหน่งนี้ (ผู้เล่นต้องไม่ติดโทษแบน)</p>
+      <div id="squad-select-list" class="inventory-grid" style="grid-template-columns: repeat(3, 1fr); max-height: 350px; overflow-y: auto; gap: 8px;">
+        <!-- List of compatible inventory cards -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Modal Switcher Logic helper script -->
+  <script>
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+    
+    function switchAuthTab(tab) {
+      document.querySelectorAll('.auth-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+      
+      if (tab === 'login') {
+        document.querySelector('.auth-tab-btn:nth-child(1)').classList.add('active');
+        document.getElementById('login-form').classList.add('active');
+      } else {
+        document.querySelector('.auth-tab-btn:nth-child(2)').classList.add('active');
+        document.getElementById('signup-form').classList.add('active');
+      }
+    }
+  </script>
+
+  <!-- Custom GUI Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+  
+  <!-- Custom Confirm Modal -->
+  <div id="confirm-modal" class="modal-wrapper">
+    <div class="glass-panel modal-card" style="max-width: 400px; text-align: center;">
+      <h3 class="font-display" style="color: var(--accent-gold); margin-bottom: 15px;" id="confirm-modal-title">ยืนยันการทำรายการ</h3>
+      <p id="confirm-modal-message" style="font-size: 0.95rem; margin-bottom: 20px; color: var(--text-muted);"></p>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="confirm-modal-cancel" class="btn btn-secondary btn-small">ยกเลิก</button>
+        <button id="confirm-modal-ok" class="btn btn-primary btn-small">ตกลง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Match Conclusion Summary Modal -->
+  <div id="modal-match-summary" class="modal-wrapper">
+    <div class="glass-panel modal-card" style="max-width: 550px; padding: 25px; border-color: var(--accent-neon-green);">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2 class="font-display" style="color: var(--accent-gold); font-size: 1.8rem; text-shadow: 0 0 10px rgba(255,213,79,0.3);" id="summary-result-title">ชัยชนะ! (Victory)</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;">สรุปผลการแข่งขันและผู้เล่นยอดเยี่ยม</p>
+      </div>
+      
+      <!-- Scoreboard Row -->
+      <div style="display: flex; justify-content: space-around; align-items: center; background: rgba(0,0,0,0.25); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="text-align: center;">
+          <h4 id="summary-p1-name" style="font-weight:700; font-size: 1rem; margin-bottom: 4px;">ทีมเรา</h4>
+          <span id="summary-p1-score" style="font-size: 2.5rem; font-weight:900; color: var(--text-light);">0</span>
+        </div>
+        <div style="font-size: 1.5rem; font-weight:800; opacity:0.3; font-family: var(--font-display);">VS</div>
+        <div style="text-align: center;">
+          <h4 id="summary-p2-name" style="font-weight:700; font-size: 1rem; margin-bottom: 4px;">คู่แข่ง</h4>
+          <span id="summary-p2-score" style="font-size: 2.5rem; font-weight:900; color: var(--accent-neon-green);">0</span>
+        </div>
+      </div>
+      
+      <!-- Stats & Goals Grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+        <!-- Goals & Assists List -->
+        <div class="glass-panel" style="padding: 12px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+          <h4 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 4px; color: var(--accent-gold);"><i class="fa-solid fa-futbol"></i> เหตุการณ์สำคัญ</h4>
+          <div id="summary-events-list" style="display: flex; flex-direction: column; gap: 6px; text-align: left;">
+            <!-- Goal scorers dynamically added -->
+          </div>
+        </div>
+        
+        <!-- Player of the Match & Rewards -->
+        <div class="glass-panel" style="padding: 12px; font-size: 0.85rem; display: flex; flex-direction: column; justify-content: space-between; text-align: left;">
+          <div>
+            <h4 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 4px; color: var(--accent-purple);"><i class="fa-solid fa-crown"></i> ผู้เล่นยอดเยี่ยม (POTM)</h4>
+            <div id="summary-potm-card" style="font-weight:700; font-size: 1.05rem; color: var(--text-light); margin-top: 6px;">-</div>
+            <div id="summary-potm-reason" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">ทำผลงานปะทะได้คะแนนสูงสุดประจำเกม</div>
+          </div>
+          <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+            <div style="color: var(--accent-gold); font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-coins"></i> <span id="summary-reward-coins">+0 Coins</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="display: flex; justify-content: center;">
+        <button id="summary-close-btn" class="btn btn-primary" style="width: 100%; padding: 10px; font-weight: 700;">กลับหน้าหลัก (Back to Hub)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core App Controller -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
